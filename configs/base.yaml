@@ -1,0 +1,74 @@
+# Konfiguracja bazowa backtestu — ETAP 2 wypełnia tylko sekcje 'data' i 'instrument'.
+# Pozostałe sekcje (strategy, entry, execution, portfolio) są tu jako szkielet
+# i zostaną użyte w kolejnych etapach.
+
+run:
+  name: "base"
+  seed: 42                      # ziarno losowe (reprodukowalność, m.in. Monte Carlo)
+
+data:
+  # Źródło darmowe, bez klucza API (patrz DATA_SOURCE_REPORT.md).
+  # provider: "yahoo" (domyślne, stabilne) lub "stooq" (zapasowe).
+  provider: "yahoo"
+  underlying_symbol: "^GSPC"    # S&P 500 index w Yahoo (= SPX). Dla Stooq użyj "^spx".
+  vix_symbol: "^VIX"            # VIX w Yahoo. Dla Stooq użyj "^vix".
+  interval: "d"                 # d = daily
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  # Zakres analizy (filtr po pobraniu). null = bez ograniczenia.
+  start_date: "2015-01-01"
+  end_date: null
+
+instrument:
+  # Specyfikacja instrumentu jest w osobnym pliku (nie hardkodujemy mnożnika).
+  spec_file: "configs/instruments/SPX.yaml"
+
+# --- Poniższe sekcje są SZKIELETEM na kolejne etapy (jeszcze nieużywane) ---
+
+strategy:
+  saty_atr_definition:
+    version: "verified"
+    source: "github.com/satymahajan/saty_atr_levels (Saty ATR Levels.pine, v5, 2022)"
+    mode: "multiday"            # -> timeframe tygodniowy
+    atr_period: 14
+    atr_method: "wilder_rma"
+    use_previous_close: true
+    timeframe: "W"
+  atr_multiplier: -1.0
+  wing_width: 50
+
+entry:
+  weekday: "Monday"
+  time: "10:00"
+  timezone: "America/New_York"
+
+expiration:
+  rule: "nearest_friday_spxw"
+
+exit:
+  mode: "expiration"
+  settle_price_basis: "close"   # SPXW PM-settled -> cena zamknięcia w dniu wygaśnięcia
+
+execution:
+  model: "bid_ask"             # mid | bid_ask | slippage
+  slippage: 0
+  commission_per_contract: 0
+  exchange_fees: 0
+  other_fees: 0
+
+# Wycena PROXY (brak darmowych realnych cen opcji SPX -> Black-Scholes + VIX).
+# UWAGA: to MODEL, nie prawdziwe historyczne ceny opcji.
+pricing:
+  model: "proxy_bs"            # proxy Black-Scholes
+  spot_basis: "open"           # cena underlyingu w dniu wejścia: open (bliżej 10:00 ET niż close)
+  vol_basis: "open"            # wartość VIX z dnia wejścia
+  risk_free_rate: 0.03         # stopa wolna od ryzyka (roczna); przy krótkim DTE wpływ mały
+  skew_slope: 0.8              # dodatkowa zmienność na jednostkę moneyness (S-K)/S dla putów OTM
+  day_count: 365               # dni w roku do przeliczenia DTE na lata
+
+portfolio:
+  initial_capital: 100000
+  sizing: "fixed_contracts"    # fixed_contracts | fixed_risk_pct | fixed_capital_alloc
+  contracts: 1
+  risk_pct: 0.02               # dla sizing=fixed_risk_pct: ryzyko = risk_pct * kapitał
+  capital_alloc: 5000          # dla sizing=fixed_capital_alloc: stała kwota ryzyka na transakcję

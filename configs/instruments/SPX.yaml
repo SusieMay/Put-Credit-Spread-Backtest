@@ -1,0 +1,32 @@
+# Specyfikacja instrumentu: SPX (S&P 500 Index options, cash-settled).
+# NIE hardkodujemy tych wartości w kodzie — kod czyta je stąd.
+#
+# Źródła (do weryfikacji przez użytkownika, publiczne):
+#   - CBOE SPX product specifications:
+#     https://www.cboe.com/tradable_products/sp_500/spx_options/specifications/
+#   Kluczowe fakty:
+#     - Mnożnik kontraktu: $100 na 1 punkt indeksu.
+#     - Rozliczenie: GOTÓWKOWE (cash settlement), styl EUROPEJSKI (brak wcześniejszego wykonania).
+#     - Wygasania standardowe (SPX) rozliczane po wartości SET (otwarcie 3. piątku).
+#     - SPXW (weeklys/end-of-month) rozliczane zwykle po zamknięciu (PM-settled).
+
+symbol: "SPX"
+description: "S&P 500 Index options (cash-settled, European-style)"
+multiplier: 100                 # USD na 1 punkt indeksu
+currency: "USD"
+settlement_type: "cash"
+exercise_style: "european"
+
+# Dostępne strike'i — używane później przy zaokrąglaniu short/long strike.
+# Uwaga: w praktyce SPX/SPXW mają różne siatki (często co 5 pkt ATM).
+# Wartość poniżej to rozsądne domyślne przybliżenie; do weryfikacji na realnych danych.
+strike_increment: 5
+
+# Weeklys (SPXW) — PM-settled (rozliczenie po zamknięciu w dniu wygaśnięcia).
+weeklys:
+  symbol: "SPXW"
+  settlement_time: "PM"         # PM = po zamknięciu sesji
+
+# Settlement standardowych SPX (3. piątek) — AM-settled (SET, wartość otwarcia).
+standard:
+  settlement_time: "AM"         # AM = specjalna wartość otwarcia (SET / ticker SET)

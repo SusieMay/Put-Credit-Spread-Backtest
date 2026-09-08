@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Dane (nie wersjonujemy pobranych danych — reprodukowalne przez pobranie)
+data/raw/
+data/processed/
+
+# Wyniki backtestów
+results/
+charts/
+
+# Systemowe
+.DS_Store
+.ipynb_checkpoints/
